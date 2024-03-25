@@ -1,7 +1,8 @@
-import { ShaderChunk } from 'three'
-
+import { ShaderChunk } from "three";
 const CSMShader = {
-  lights_fragment_begin: /* glsl */ `
+  lights_fragment_begin: (
+    /* glsl */
+    `
 GeometricContext geometry;
 
 geometry.position = - vViewPosition;
@@ -238,9 +239,12 @@ IncidentLight directLight;
 	vec3 clearcoatRadiance = vec3( 0.0 );
 
 #endif
-`,
+`
+  ),
   getlights_pars_begin() {
-    return /* glsl */ `
+    return (
+      /* glsl */
+      `
 			#if defined( USE_CSM ) && defined( CSM_CASCADES )
 			uniform vec2 CSM_cascades[CSM_CASCADES];
 			uniform float cameraNear;
@@ -249,7 +253,10 @@ IncidentLight directLight;
 
 			${ShaderChunk.lights_pars_begin}
 		`
-  },
-}
-
-export { CSMShader }
+    );
+  }
+};
+export {
+  CSMShader
+};
+//# sourceMappingURL=CSMShader.js.map

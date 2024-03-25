@@ -1,138 +1,97 @@
-import { BufferGeometry, FileLoader, Float32BufferAttribute, Loader } from 'three'
-
+import { Loader, FileLoader, BufferGeometry, Float32BufferAttribute } from "three";
 class PDBLoader extends Loader {
   constructor(manager) {
-    super(manager)
+    super(manager);
   }
-
   load(url, onLoad, onProgress, onError) {
-    const scope = this
-
-    const loader = new FileLoader(scope.manager)
-    loader.setPath(scope.path)
-    loader.setRequestHeader(scope.requestHeader)
-    loader.setWithCredentials(scope.withCredentials)
+    const scope = this;
+    const loader = new FileLoader(scope.manager);
+    loader.setPath(scope.path);
+    loader.setRequestHeader(scope.requestHeader);
+    loader.setWithCredentials(scope.withCredentials);
     loader.load(
       url,
-      function (text) {
+      function(text) {
         try {
-          onLoad(scope.parse(text))
+          onLoad(scope.parse(text));
         } catch (e) {
           if (onError) {
-            onError(e)
+            onError(e);
           } else {
-            console.error(e)
+            console.error(e);
           }
-
-          scope.manager.itemError(url)
+          scope.manager.itemError(url);
         }
       },
       onProgress,
-      onError,
-    )
+      onError
+    );
   }
-
   // Based on CanvasMol PDB parser
-
   parse(text) {
-    function trim(text) {
-      return text.replace(/^\s\s*/, '').replace(/\s\s*$/, '')
+    function trim(text2) {
+      return text2.replace(/^\s\s*/, "").replace(/\s\s*$/, "");
     }
-
-    function capitalize(text) {
-      return text.charAt(0).toUpperCase() + text.substr(1).toLowerCase()
+    function capitalize(text2) {
+      return text2.charAt(0).toUpperCase() + text2.substr(1).toLowerCase();
     }
-
     function hash(s, e) {
-      return 's' + Math.min(s, e) + 'e' + Math.max(s, e)
+      return "s" + Math.min(s, e) + "e" + Math.max(s, e);
     }
-
     function parseBond(start, length, satom, i) {
-      const eatom = parseInt(lines[i].substr(start, length))
-
+      const eatom = parseInt(lines[i].substr(start, length));
       if (eatom) {
-        const h = hash(satom, eatom)
-
-        if (_bhash[h] === undefined) {
-          _bonds.push([satom - 1, eatom - 1, 1])
-          _bhash[h] = _bonds.length - 1
-        } else {
-          // doesn't really work as almost all PDBs
-          // have just normal bonds appearing multiple
-          // times instead of being double/triple bonds
-          // bonds[bhash[h]][2] += 1;
+        const h = hash(satom, eatom);
+        if (_bhash[h] === void 0) {
+          _bonds.push([satom - 1, eatom - 1, 1]);
+          _bhash[h] = _bonds.length - 1;
         }
       }
     }
-
     function buildGeometry() {
       const build = {
         geometryAtoms: new BufferGeometry(),
         geometryBonds: new BufferGeometry(),
         json: {
-          atoms: atoms,
-        },
-      }
-
-      const geometryAtoms = build.geometryAtoms
-      const geometryBonds = build.geometryBonds
-
-      const verticesAtoms = []
-      const colorsAtoms = []
-      const verticesBonds = []
-
-      // atoms
-
+          atoms
+        }
+      };
+      const geometryAtoms = build.geometryAtoms;
+      const geometryBonds = build.geometryBonds;
+      const verticesAtoms = [];
+      const colorsAtoms = [];
+      const verticesBonds = [];
       for (let i = 0, l = atoms.length; i < l; i++) {
-        const atom = atoms[i]
-
-        const x = atom[0]
-        const y = atom[1]
-        const z = atom[2]
-
-        verticesAtoms.push(x, y, z)
-
-        const r = atom[3][0] / 255
-        const g = atom[3][1] / 255
-        const b = atom[3][2] / 255
-
-        colorsAtoms.push(r, g, b)
+        const atom = atoms[i];
+        const x = atom[0];
+        const y = atom[1];
+        const z = atom[2];
+        verticesAtoms.push(x, y, z);
+        const r = atom[3][0] / 255;
+        const g = atom[3][1] / 255;
+        const b = atom[3][2] / 255;
+        colorsAtoms.push(r, g, b);
       }
-
-      // bonds
-
       for (let i = 0, l = _bonds.length; i < l; i++) {
-        const bond = _bonds[i]
-
-        const start = bond[0]
-        const end = bond[1]
-
-        const startAtom = _atomMap[start]
-        const endAtom = _atomMap[end]
-
-        let x = startAtom[0]
-        let y = startAtom[1]
-        let z = startAtom[2]
-
-        verticesBonds.push(x, y, z)
-
-        x = endAtom[0]
-        y = endAtom[1]
-        z = endAtom[2]
-
-        verticesBonds.push(x, y, z)
+        const bond = _bonds[i];
+        const start = bond[0];
+        const end = bond[1];
+        const startAtom = _atomMap[start];
+        const endAtom = _atomMap[end];
+        let x = startAtom[0];
+        let y = startAtom[1];
+        let z = startAtom[2];
+        verticesBonds.push(x, y, z);
+        x = endAtom[0];
+        y = endAtom[1];
+        z = endAtom[2];
+        verticesBonds.push(x, y, z);
       }
-
-      // build geometry
-
-      geometryAtoms.setAttribute('position', new Float32BufferAttribute(verticesAtoms, 3))
-      geometryAtoms.setAttribute('color', new Float32BufferAttribute(colorsAtoms, 3))
-
-      geometryBonds.setAttribute('position', new Float32BufferAttribute(verticesBonds, 3))
-
-      return build
+      geometryAtoms.setAttribute("position", new Float32BufferAttribute(verticesAtoms, 3));
+      geometryAtoms.setAttribute("color", new Float32BufferAttribute(colorsAtoms, 3));
+      geometryBonds.setAttribute("position", new Float32BufferAttribute(verticesBonds, 3));
+      return build;
     }
-
     const CPK = {
       h: [255, 255, 255],
       he: [217, 255, 255],
@@ -251,50 +210,38 @@ class PDBLoader extends Loader {
       uup: [235, 0, 38],
       uuh: [235, 0, 38],
       uus: [235, 0, 38],
-      uuo: [235, 0, 38],
-    }
-
-    const atoms = []
-
-    const _bonds = []
-    const _bhash = {}
-    const _atomMap = {}
-
-    // parse
-
-    const lines = text.split('\n')
-
+      uuo: [235, 0, 38]
+    };
+    const atoms = [];
+    const _bonds = [];
+    const _bhash = {};
+    const _atomMap = {};
+    const lines = text.split("\n");
     for (let i = 0, l = lines.length; i < l; i++) {
-      if (lines[i].substr(0, 4) === 'ATOM' || lines[i].substr(0, 6) === 'HETATM') {
-        const x = parseFloat(lines[i].substr(30, 7))
-        const y = parseFloat(lines[i].substr(38, 7))
-        const z = parseFloat(lines[i].substr(46, 7))
-        const index = parseInt(lines[i].substr(6, 5)) - 1
-
-        let e = trim(lines[i].substr(76, 2)).toLowerCase()
-
-        if (e === '') {
-          e = trim(lines[i].substr(12, 2)).toLowerCase()
+      if (lines[i].substr(0, 4) === "ATOM" || lines[i].substr(0, 6) === "HETATM") {
+        const x = parseFloat(lines[i].substr(30, 7));
+        const y = parseFloat(lines[i].substr(38, 7));
+        const z = parseFloat(lines[i].substr(46, 7));
+        const index = parseInt(lines[i].substr(6, 5)) - 1;
+        let e = trim(lines[i].substr(76, 2)).toLowerCase();
+        if (e === "") {
+          e = trim(lines[i].substr(12, 2)).toLowerCase();
         }
-
-        const atomData = [x, y, z, CPK[e], capitalize(e)]
-
-        atoms.push(atomData)
-        _atomMap[index] = atomData
-      } else if (lines[i].substr(0, 6) === 'CONECT') {
-        const satom = parseInt(lines[i].substr(6, 5))
-
-        parseBond(11, 5, satom, i)
-        parseBond(16, 5, satom, i)
-        parseBond(21, 5, satom, i)
-        parseBond(26, 5, satom, i)
+        const atomData = [x, y, z, CPK[e], capitalize(e)];
+        atoms.push(atomData);
+        _atomMap[index] = atomData;
+      } else if (lines[i].substr(0, 6) === "CONECT") {
+        const satom = parseInt(lines[i].substr(6, 5));
+        parseBond(11, 5, satom, i);
+        parseBond(16, 5, satom, i);
+        parseBond(21, 5, satom, i);
+        parseBond(26, 5, satom, i);
       }
     }
-
-    // build and return geometry
-
-    return buildGeometry()
+    return buildGeometry();
   }
 }
-
-export { PDBLoader }
+export {
+  PDBLoader
+};
+//# sourceMappingURL=PDBLoader.js.map

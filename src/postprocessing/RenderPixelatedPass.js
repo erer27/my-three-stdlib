@@ -1,86 +1,63 @@
-import {
-  WebGLRenderTarget,
-  RGBAFormat,
-  MeshNormalMaterial,
-  ShaderMaterial,
-  Vector2,
-  Vector4,
-  DepthTexture,
-  NearestFilter,
-} from 'three'
-import { Pass, FullScreenQuad } from './Pass'
-
+import { Vector2, MeshNormalMaterial, ShaderMaterial, Vector4, WebGLRenderTarget, DepthTexture, NearestFilter, RGBAFormat } from "three";
+import { Pass, FullScreenQuad } from "./Pass.js";
 class RenderPixelatedPass extends Pass {
   constructor(resolution, pixelSize, scene, camera, options = {}) {
-    super()
-
-    this.pixelSize = pixelSize
-    this.resolution = new Vector2()
-    this.renderResolution = new Vector2()
-    this.setSize(resolution.x, resolution.y)
-
-    this.fsQuad = new FullScreenQuad(this.material())
-    this.scene = scene
-    this.camera = camera
-
-    this.normalEdgeStrength = options.normalEdgeStrength ?? 0.3
-    this.depthEdgeStrength = options.depthEdgeStrength ?? 0.4
-
-    this.rgbRenderTarget = pixelRenderTarget(this.renderResolution, RGBAFormat, true)
-    this.normalRenderTarget = pixelRenderTarget(this.renderResolution, RGBAFormat, false)
-
-    this.normalMaterial = new MeshNormalMaterial()
+    var _a, _b;
+    super();
+    this.pixelSize = pixelSize;
+    this.resolution = new Vector2();
+    this.renderResolution = new Vector2();
+    this.setSize(resolution.x, resolution.y);
+    this.fsQuad = new FullScreenQuad(this.material());
+    this.scene = scene;
+    this.camera = camera;
+    this.normalEdgeStrength = (_a = options.normalEdgeStrength) != null ? _a : 0.3;
+    this.depthEdgeStrength = (_b = options.depthEdgeStrength) != null ? _b : 0.4;
+    this.rgbRenderTarget = pixelRenderTarget(this.renderResolution, RGBAFormat, true);
+    this.normalRenderTarget = pixelRenderTarget(this.renderResolution, RGBAFormat, false);
+    this.normalMaterial = new MeshNormalMaterial();
   }
-
   dispose() {
-    this.rgbRenderTarget.dispose()
-    this.normalRenderTarget.dispose()
-    this.fsQuad.dispose()
+    this.rgbRenderTarget.dispose();
+    this.normalRenderTarget.dispose();
+    this.fsQuad.dispose();
   }
-
   setSize(width, height) {
-    this.resolution.set(width, height)
-    this.renderResolution.set((width / this.pixelSize) | 0, (height / this.pixelSize) | 0)
-    const { x, y } = this.renderResolution
-    this.rgbRenderTarget?.setSize(x, y)
-    this.normalRenderTarget?.setSize(x, y)
-    this.fsQuad?.material.uniforms.resolution.value.set(x, y, 1 / x, 1 / y)
+    var _a, _b, _c;
+    this.resolution.set(width, height);
+    this.renderResolution.set(width / this.pixelSize | 0, height / this.pixelSize | 0);
+    const { x, y } = this.renderResolution;
+    (_a = this.rgbRenderTarget) == null ? void 0 : _a.setSize(x, y);
+    (_b = this.normalRenderTarget) == null ? void 0 : _b.setSize(x, y);
+    (_c = this.fsQuad) == null ? void 0 : _c.material.uniforms.resolution.value.set(x, y, 1 / x, 1 / y);
   }
-
   setPixelSize(pixelSize) {
-    this.pixelSize = pixelSize
-    this.setSize(this.resolution.x, this.resolution.y)
+    this.pixelSize = pixelSize;
+    this.setSize(this.resolution.x, this.resolution.y);
   }
-
   render(renderer, writeBuffer) {
-    const uniforms = this.fsQuad.material.uniforms
-    uniforms.normalEdgeStrength.value = this.normalEdgeStrength
-    uniforms.depthEdgeStrength.value = this.depthEdgeStrength
-
-    renderer.setRenderTarget(this.rgbRenderTarget)
-    renderer.render(this.scene, this.camera)
-
-    const overrideMaterial_old = this.scene.overrideMaterial
-    renderer.setRenderTarget(this.normalRenderTarget)
-    this.scene.overrideMaterial = this.normalMaterial
-    renderer.render(this.scene, this.camera)
-    this.scene.overrideMaterial = overrideMaterial_old
-
-    uniforms.tDiffuse.value = this.rgbRenderTarget.texture
-    uniforms.tDepth.value = this.rgbRenderTarget.depthTexture
-    uniforms.tNormal.value = this.normalRenderTarget.texture
-
+    const uniforms = this.fsQuad.material.uniforms;
+    uniforms.normalEdgeStrength.value = this.normalEdgeStrength;
+    uniforms.depthEdgeStrength.value = this.depthEdgeStrength;
+    renderer.setRenderTarget(this.rgbRenderTarget);
+    renderer.render(this.scene, this.camera);
+    const overrideMaterial_old = this.scene.overrideMaterial;
+    renderer.setRenderTarget(this.normalRenderTarget);
+    this.scene.overrideMaterial = this.normalMaterial;
+    renderer.render(this.scene, this.camera);
+    this.scene.overrideMaterial = overrideMaterial_old;
+    uniforms.tDiffuse.value = this.rgbRenderTarget.texture;
+    uniforms.tDepth.value = this.rgbRenderTarget.depthTexture;
+    uniforms.tNormal.value = this.normalRenderTarget.texture;
     if (this.renderToScreen) {
-      renderer.setRenderTarget(null)
+      renderer.setRenderTarget(null);
     } else {
-      renderer.setRenderTarget(writeBuffer)
-
-      if (this.clear) renderer.clear()
+      renderer.setRenderTarget(writeBuffer);
+      if (this.clear)
+        renderer.clear();
     }
-
-    this.fsQuad.render(renderer)
+    this.fsQuad.render(renderer);
   }
-
   material() {
     return new ShaderMaterial({
       uniforms: {
@@ -92,11 +69,11 @@ class RenderPixelatedPass extends Pass {
             this.renderResolution.x,
             this.renderResolution.y,
             1 / this.renderResolution.x,
-            1 / this.renderResolution.y,
-          ),
+            1 / this.renderResolution.y
+          )
         },
         normalEdgeStrength: { value: 0 },
-        depthEdgeStrength: { value: 0 },
+        depthEdgeStrength: { value: 0 }
       },
       vertexShader: `
 				varying vec2 vUv;
@@ -197,28 +174,27 @@ class RenderPixelatedPass extends Pass {
 					gl_FragColor = texel * Strength;
 
 				}
-				`,
-    })
+				`
+    });
   }
 }
-
 function pixelRenderTarget(resolution, pixelFormat, useDepthTexture) {
   const renderTarget = new WebGLRenderTarget(
     resolution.x,
     resolution.y,
-    !useDepthTexture
-      ? undefined
-      : {
-          depthTexture: new DepthTexture(resolution.x, resolution.y),
-          depthBuffer: true,
-        },
-  )
-  renderTarget.texture.format = pixelFormat
-  renderTarget.texture.minFilter = NearestFilter
-  renderTarget.texture.magFilter = NearestFilter
-  renderTarget.texture.generateMipmaps = false
-  renderTarget.stencilBuffer = false
-  return renderTarget
+    !useDepthTexture ? void 0 : {
+      depthTexture: new DepthTexture(resolution.x, resolution.y),
+      depthBuffer: true
+    }
+  );
+  renderTarget.texture.format = pixelFormat;
+  renderTarget.texture.minFilter = NearestFilter;
+  renderTarget.texture.magFilter = NearestFilter;
+  renderTarget.texture.generateMipmaps = false;
+  renderTarget.stencilBuffer = false;
+  return renderTarget;
 }
-
-export { RenderPixelatedPass }
+export {
+  RenderPixelatedPass
+};
+//# sourceMappingURL=RenderPixelatedPass.js.map
